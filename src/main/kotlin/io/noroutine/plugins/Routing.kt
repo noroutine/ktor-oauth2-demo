@@ -18,6 +18,8 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import io.ktor.util.logging.*
 import io.noroutine.models.UserInfo
+import io.noroutine.session.AuthSession
+import io.noroutine.session.UserSession
 import kotlinx.serialization.Serializable
 import java.io.File
 
@@ -25,10 +27,10 @@ internal val LOGGER = KtorSimpleLogger("io.noroutine.Routing")
 
 private suspend fun getPersonalGreeting(
     httpClient: HttpClient,
-    userSession: UserSession
+    authSession: AuthSession
 ): UserInfo = httpClient.get("https://www.googleapis.com/oauth2/v2/userinfo") {
     headers {
-        append(HttpHeaders.Authorization, "Bearer ${userSession.accessToken}")
+        append(HttpHeaders.Authorization, "Bearer ${authSession.accessToken}")
     }
 }.body<UserInfo>().also { LOGGER.info("UserInfo: $it") }
 
@@ -36,31 +38,31 @@ fun Application.configureRouting() {
     install(Resources)
     install(AutoHeadResponse)
     install(Sessions) {
-        cookie<MySession>("MY_SESSION") {
+        cookie<UserSession>(UserSession.SESSION_COOKIE) {
             cookie.extensions["SameSite"] = "lax"
         }
-        cookie<UserSession>(
-            "MY_USER",
+        cookie<AuthSession>(
+            AuthSession.SESSION_COOKIE,
             directorySessionStorage(File(System.getenv("SESSION_STORAGE_DIR") ?: "build/.sessions"))
         )
     }
     routing {
         get("/") {
-            val userSession: UserSession? = call.sessions.get()
-            if (userSession != null) {
+            val authSession: AuthSession? = call.sessions.get()
+            if (authSession != null) {
                 val httpClient = HttpClient(Apache) {
                     install(ContentNegotiation) {
                         json()
                     }
                 }
-                val userInfo: UserInfo = getPersonalGreeting(httpClient, userSession)
+                val userInfo: UserInfo = getPersonalGreeting(httpClient, authSession)
                 call.respondText("Hello, ${userInfo.name}!")
             } else {
                 call.respondText("Hello World!")
             }
         }
         get("/session/increment") {
-            val session = call.sessions.get<MySession>() ?: MySession()
+            val session = call.sessions.get<UserSession>() ?: UserSession()
             call.sessions.set(session.copy(count = session.count + 1))
             call.respondText("Counter is ${session.count}. Refresh to increment.")
         }

@@ -13,9 +13,7 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-
-data class MySession(val count: Int = 0)
-data class UserSession(val accessToken: String)
+import io.noroutine.session.AuthSession
 
 
 fun Application.configureSecurity() {
@@ -68,7 +66,7 @@ fun Application.configureSecurity() {
 
             get("/callback") {
                 val principal: OAuthAccessTokenResponse.OAuth2? = call.authentication.principal()
-                call.sessions.set(UserSession(principal?.accessToken.toString()))
+                call.sessions.set(AuthSession(principal?.accessToken.toString()))
                 call.respondRedirect("/")
             }
         }
