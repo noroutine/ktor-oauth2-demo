@@ -1,0 +1,20 @@
+image: cr.nrtn.dev/infra/gradle:$INFRA_VERSION
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - gradle assemble # command to build and debug
+  only:
+    - master #set trigger for CICD if push or merge in master branch
+  artifacts:
+    paths:
+      - ./app/build/outputs/ # set artifact path which store your APK file
+
+unitTests:
+  stage: test
+  script:
+    - gradle test
