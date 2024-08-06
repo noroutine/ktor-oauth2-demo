@@ -25,6 +25,8 @@ dependencies {
     implementation(libs.ktor.server.auto.head.response)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.apache)
+    implementation(libs.ktor.serialization.json)
+    implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.server.netty)
     implementation(libs.logback.classic)
     implementation(libs.ktor.server.config.yaml)
